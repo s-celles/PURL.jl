@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Widened `JSON` compat bound to `"0.21, 1"` so Julia 1.6 (LTS) CI can resolve a compatible `JSON.jl` version; `JSON = "1"` alone had no version satisfying both the `julia = "1.6"` and `JSON` constraints simultaneously
+
 ## [0.5.0] - 2026-02-04
 
 ### Changed
