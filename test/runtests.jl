@@ -2,7 +2,7 @@ using Test
 using PackageURLs
 using Aqua
 using JSONSchema
-using JSON3
+using JSON
 
 @testset "PackageURLs.jl" begin
     include("test_types.jl")

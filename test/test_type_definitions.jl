@@ -1,6 +1,7 @@
 # Tests for JSON-based type definition loading (Feature 007)
 
 # Access internal functions for testing
+using JSON
 using PackageURLs: normalize_name, validate_purl
 using PackageURLs: purl_spec_path, type_definitions_path, test_fixtures_path
 
@@ -13,7 +14,7 @@ end
 # Schema validation for official type definitions (Feature 009)
 const PURL_TYPE_SCHEMA_PATH = joinpath(@__DIR__, "fixtures", "schemas", "purl-type-definition.schema-1.0.json")
 const PURL_TYPE_SCHEMA = if isfile(PURL_TYPE_SCHEMA_PATH)
-    JSONSchema.Schema(JSON3.read(read(PURL_TYPE_SCHEMA_PATH, String)))
+    JSONSchema.Schema(JSON.parse(read(PURL_TYPE_SCHEMA_PATH, String)))
 else
     nothing
 end
@@ -385,7 +386,7 @@ end
                 path = artifact_type_path(type_name)
                 if isfile(path)
                     @testset "$type_name validates against schema" begin
-                        json_data = JSON3.read(read(path, String))
+                        json_data = JSON.parse(read(path, String))
                         if type_name in known_schema_issues
                             @test_broken isvalid(PURL_TYPE_SCHEMA, json_data)
                         else
@@ -490,8 +491,8 @@ end
         swid_path = artifact_type_path("swid")
         if isfile(swid_path)
             # Read raw JSON to get expected qualifiers dynamically
-            json_data = JSON3.read(read(swid_path, String))
-            expected_qualifiers = [String(q.key) for q in json_data.qualifiers_definition]
+            json_data = JSON.parse(read(swid_path, String))
+            expected_qualifiers = [q["key"] for q in json_data["qualifiers_definition"]]
 
             # Verify load_type_definition extracts them correctly
             def = load_type_definition(swid_path)

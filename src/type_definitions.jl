@@ -1,7 +1,7 @@
 # JSON-based type definition loading for PURL
 # Per ECMA-427 Section 6 - Type Definition Schema
 
-using JSON3
+using JSON
 using Pkg.Artifacts
 
 # Subdirectory name within the purl_spec artifact (GitHub archive naming convention)
@@ -159,41 +159,38 @@ function load_type_definition(path::AbstractString)
     !isfile(path) && throw(ArgumentError("Type definition file not found: $path"))
 
     content = read(path, String)
-    json = JSON3.read(content)
+    json = JSON.parse(content)
 
     # Validate required 'type' field
-    if !haskey(json, :type)
+    if !haskey(json, "type")
         throw(PURLError("Type definition missing required 'type' field"))
     end
 
-    type_name = String(json[:type])
+    type_name = json["type"]
     if isempty(type_name)
         throw(PURLError("Type definition 'type' field cannot be empty"))
     end
 
     # Extract optional fields with defaults
-    description = get(json, :description, nothing)
-    if description !== nothing
-        description = String(description)
-    end
+    description = get(json, "description", nothing)
 
     name_normalize = String[]
     required_qualifiers = String[]
     known_qualifiers = String[]
 
     # Parse name_definition per ECMA-427 Section 6
-    if haskey(json, :name_definition)
-        name_def = json[:name_definition]
+    if haskey(json, "name_definition")
+        name_def = json["name_definition"]
 
         # case_sensitive: false → lowercase normalization
-        if haskey(name_def, :case_sensitive) && name_def[:case_sensitive] == false
+        if haskey(name_def, "case_sensitive") && name_def["case_sensitive"] == false
             push!(name_normalize, "lowercase")
         end
 
         # Extract normalization from human-readable rules
-        if haskey(name_def, :normalization_rules)
-            for rule in name_def[:normalization_rules]
-                rule_lower = lowercase(String(rule))
+        if haskey(name_def, "normalization_rules")
+            for rule in name_def["normalization_rules"]
+                rule_lower = lowercase(rule)
                 if occursin("underscore", rule_lower) && occursin("dash", rule_lower)
                     push!(name_normalize, "replace_underscore")
                 elseif occursin("dot", rule_lower) && (occursin("dash", rule_lower) || occursin("hyphen", rule_lower))
@@ -214,13 +211,13 @@ function load_type_definition(path::AbstractString)
     end
 
     # Parse qualifiers_definition per ECMA-427 Section 6
-    if haskey(json, :qualifiers_definition)
-        for qual_def in json[:qualifiers_definition]
-            if haskey(qual_def, :key)
-                key = String(qual_def[:key])
+    if haskey(json, "qualifiers_definition")
+        for qual_def in json["qualifiers_definition"]
+            if haskey(qual_def, "key")
+                key = qual_def["key"]
                 push!(known_qualifiers, key)
 
-                if haskey(qual_def, :requirement) && qual_def[:requirement] == "required"
+                if haskey(qual_def, "requirement") && qual_def["requirement"] == "required"
                     push!(required_qualifiers, key)
                 end
             end

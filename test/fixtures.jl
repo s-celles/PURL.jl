@@ -3,7 +3,7 @@
 #
 # Loads official purl-spec test fixtures from test/fixtures/
 
-using JSON3
+using JSON
 
 const FIXTURES_DIR = joinpath(@__DIR__, "fixtures")
 
@@ -70,7 +70,7 @@ function parse_components(obj)
         return nothing
     end
 
-    qualifiers = let q = get(obj, :qualifiers, nothing)
+    qualifiers = let q = get(obj, "qualifiers", nothing)
         if q === nothing || isempty(q)
             nothing
         else
@@ -79,13 +79,13 @@ function parse_components(obj)
     end
 
     PURLComponents(
-        type = let v = get(obj, :type, nothing); v === nothing ? nothing : string(v) end,
-        namespace = let v = get(obj, :namespace, nothing); v === nothing ? nothing : string(v) end,
-        name = let v = get(obj, :name, nothing); v === nothing ? nothing : string(v) end,
-        version = let v = get(obj, :version, nothing); v === nothing ? nothing : string(v) end,
+        type = let v = get(obj, "type", nothing); v === nothing ? nothing : string(v) end,
+        namespace = let v = get(obj, "namespace", nothing); v === nothing ? nothing : string(v) end,
+        name = let v = get(obj, "name", nothing); v === nothing ? nothing : string(v) end,
+        version = let v = get(obj, "version", nothing); v === nothing ? nothing : string(v) end,
         qualifiers = qualifiers,
-        subpath = let v = get(obj, :subpath, nothing); v === nothing ? nothing : string(v) end,
-        canonical_purl = let v = get(obj, :canonical_purl, nothing); v === nothing ? nothing : string(v) end,
+        subpath = let v = get(obj, "subpath", nothing); v === nothing ? nothing : string(v) end,
+        canonical_purl = let v = get(obj, "canonical_purl", nothing); v === nothing ? nothing : string(v) end,
     )
 end
 
@@ -96,34 +96,34 @@ Load test cases from a purl-spec JSON test file.
 """
 function load_test_file(filepath::String)
     content = read(filepath, String)
-    data = JSON3.read(content)
+    data = JSON.parse(content)
 
     tests = PURLTestCase[]
-    for t in data.tests
+    for t in data["tests"]
         # Parse input based on test type
-        input = if t.input isa AbstractString
-            string(t.input)
+        input = if t["input"] isa AbstractString
+            string(t["input"])
         else
-            parse_components(t.input)
+            parse_components(t["input"])
         end
 
         # Parse expected_output based on test type and content
-        expected_output = if !hasproperty(t, :expected_output) || t.expected_output === nothing
+        expected_output = if !haskey(t, "expected_output") || t["expected_output"] === nothing
             nothing
-        elseif t.expected_output isa AbstractString
-            string(t.expected_output)
+        elseif t["expected_output"] isa AbstractString
+            string(t["expected_output"])
         else
-            parse_components(t.expected_output)
+            parse_components(t["expected_output"])
         end
 
         push!(tests, PURLTestCase(
-            string(get(t, :description, "")),
-            string(get(t, :test_group, "base")),
-            string(get(t, :test_type, "parse")),
+            string(get(t, "description", "")),
+            string(get(t, "test_group", "base")),
+            string(get(t, "test_type", "parse")),
             input,
             expected_output,
-            get(t, :expected_failure, false),
-            let v = get(t, :expected_failure_reason, nothing)
+            get(t, "expected_failure", false),
+            let v = get(t, "expected_failure_reason", nothing)
                 v === nothing ? nothing : string(v)
             end
         ))
